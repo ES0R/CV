@@ -19,3 +19,4 @@
 
 Write `from utility.util import *` in `*.py` to get the util functions into the environment
 
+Use `pip3 install -r requirements.txt` to install relevant packages
