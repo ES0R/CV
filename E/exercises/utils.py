@@ -1,5 +1,9 @@
 import numpy as np
 
+def Test():
+    print("Hello")
+    return 
+
 def Pi(ph):
     p = ph[:-1]/ph[-1]
     return p
@@ -24,3 +28,5 @@ def box3d(n=16):
     for i, j in [(-1, -1), (-1, 1), (1, 1), (0, 0)]:
         points.extend(set(it.permutations([(i, )*n, (j, )*n, N])))
     return np.hstack(points)/2
+
+def rotz()
