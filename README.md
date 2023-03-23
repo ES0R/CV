@@ -4,15 +4,15 @@
 
 ## File structure
     .
-    ├── D_cv.ipynb            # Daniel jupyternotebook
-    ├── E.ipynb               # Emil jupyternotebook
-    ├── J_cv.ipynb            # James jupyernotebook
+    ├── DaddyD                # Daniel Folder
+    ├── Emilovich             # Emil Folder
     ├── misc                  # Files that should not be in the parent repo
-    ├── utility               # Contains util module 
+    ├── src                   # Contains all exercise and relevant functions 
     │   ├── __pycache__    
     │   ├── __init__.py      
-    │   ├── util.py           # Contains all helper functions
-    └── add_util_path.py      # Run script to add util to python path
+    │   ├── functions.py      # Contains all helper functions
+    │   ├── exerciseN.py      # All exercise for that lecture 
+    └── requirements.txt      # Run script to download relevant modules
     └── README.md 
 
 ## Requirements
