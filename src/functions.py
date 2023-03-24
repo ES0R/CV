@@ -352,3 +352,55 @@ def draw_two_points(points):
     
     return p1, p2
 
+def scaleSpaced(im,sigma,n):
+    
+    g_list = []
+
+    for i in range(n):
+        print(i)
+        I, Ix, Iy = gaussianSmoothing(im, sigma*2**i)
+        g_list.append(I)
+        #plt.figure()
+        #plt.imshow(I, cmap="gray")
+
+    return g_list
+
+def differenceOfGaussians(im, sigma, n):
+    g_list = scaleSpaced(im,sigma,n)
+    dog_list = [y - x for x,y in zip(g_list,g_list[1])]
+    return dog_list
+
+def detectBlobs(im, sigma, n, tau):
+    # Create the scale space pyramid
+    im_scales = scaleSpaced(im, sigma, n)
+    
+    # Calculate the difference of Gaussians (DoG) for each level of the pyramid
+    DoG = []
+    for i in range(1, n):
+        DoG.append(im_scales[i] - im_scales[i-1])
+    
+    # Apply non-maximum suppression to each level of the DoG pyramid
+    maxDoG = []
+    for i in range(n-2):
+        # Dilate the absolute value of the DoG with a 3x3 kernel
+        dilated = cv2.dilate(np.abs(DoG[i]), np.ones((3,3)))
+        
+        # Find local maxima by comparing the central pixel to its 8 neighbours
+        maxima = (DoG[i] > tau) & (DoG[i] == dilated)
+        
+        # Add the scale of each local maximum to the maxDoG pyramid
+        maxDoG.append(maxima.astype(np.float32) * (i+1))
+    
+    # Combine the local maxima from all levels of the maxDoG pyramid
+    maxima = np.dstack(maxDoG).max(axis=2)
+    
+    # Find the locations and scales of all the local maxima
+    blobs = []
+    for y in range(im.shape[0]):
+        for x in range(im.shape[1]):
+            if maxima[y,x] > 0:
+                scale = maxima[y,x]
+                radius = int(scale * np.sqrt(2))
+                blobs.append((x,y,radius))
+    
+    return blobs
