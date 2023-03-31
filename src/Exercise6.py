@@ -17,7 +17,7 @@ g, gd = gaussian1DKernel(3, size=1)
 
 #%% 6.2
 
-im = cv2.imread("week06_data/week06_data/TestIm1.png")
+im = cv2.imread("data/TestIm1.png")
 
 im = (im[:,:,::-1])
 

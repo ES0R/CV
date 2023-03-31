@@ -16,7 +16,7 @@ from functions import line, in_out, consensus, draw_two_points
 import numpy as np
 #%% 7.1
 
-img = cv2.imread("week06_data/week06_data/Box3.bmp")
+img = cv2.imread("data/Box3.bmp")
 
 img = (img[:,:,::-1])
 
@@ -221,3 +221,6 @@ def RANSAC2(points, N=100, threshold=0.1, p=0.99):
     return new_line
 
 r_line = RANSAC2(points, N = 100, threshold=0.4, p=0.9)
+
+
+

@@ -288,3 +288,42 @@ def differenceOfGaussians(im, sigma, n):
     g_list = scaleSpaced(im, sigma, n)
     dog_list = [y - x for x,y in zip(g_list,g_list[1:])]
     return dog_list
+
+def detectBlobs(im,sigma,n,tau):
+    im_scales = scaleSpaced(im, sigma, n)
+
+
+    DoG = differenceOfGaussians(im, sigma, n)
+    
+    maxDoG = []
+    for i in range(n-1):
+        dilated = cv2.dilate(np.abs(DoG[i]), np.ones((3,3)))
+        
+        maxima = (np.abs(DoG[i]) > tau)  & (np.abs(DoG[i]) == dilated)
+        
+        maxDoG.append(maxima.astype(np.float32) * (i+1)) #maxima.astype(np.float32)
+    
+    maxima = np.dstack(maxDoG).max(axis=2)
+    
+    blobs = []
+    for y in range(im.shape[0]):
+        for x in range(im.shape[1]):
+            if maxima[y,x] > 0:
+                scale = maxima[y,x]
+                radius = int(2 * sigma**(scale-1))
+                blobs.append((x,y,radius))
+    
+
+    return blobs
+
+def transformIm(im,theta,s):
+    height, width = im.shape[:2]
+    # get the center coordinates of the image to create the 2D rotation matrix
+    center = (width/2, height/2)
+    rotate_matrix = cv2.getRotationMatrix2D(center=center, angle=theta, scale=s)
+ 
+    # rotate the image using cv2.warpAffine
+    r_im = cv2.warpAffine(src=im, M=rotate_matrix, dsize=(width, height))
+    
+    return r_im
+
