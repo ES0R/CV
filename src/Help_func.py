@@ -327,3 +327,108 @@ def transformIm(im,theta,s):
     
     return r_im
 
+def Fest_8point(q1,q2):
+    
+    B = []
+    N = q1.shape[1]
+    
+    for i in range(N):
+        x1 = q1[0,i]
+        y1 = q1[1,i]  
+        x2 = q2[0,i]
+        y2 = q2[1,i] 
+        
+        B.append(np.array([x1*x2,y1*x2,x2,x1*y2,y1*y2,y2,x1,y1,1]))
+    
+    B = np.array(B)
+    
+    U, S, V = np.linalg.svd(B)
+    F = V[-1, :].reshape((3, 3))
+    return F
+
+def RANSAC(points, N=100, threshold=0.1):
+    best_line = None
+    best_consensus = 0
+    
+    
+    for n in range(N):
+        p1, p2 = draw_two_points(points)
+        
+        l = line(p1.reshape(2,1), p2.reshape(2,1))
+        
+        c = consensus(points, l, threshold)
+        
+        if c > best_consensus:
+            best_consensus = c
+            best_line = l
+            
+    inliers_outliers = in_out(points, best_line, threshold)
+    
+    inliers = points[:, inliers_outliers]
+    outliers = points[:, ~inliers_outliers]
+    plt.scatter(inliers[0,:], inliers[1,:], c='blue')
+    plt.scatter(outliers[0,:], outliers[1,:], c='red')
+    
+    if best_line is not None:
+        
+        inlier_points = points[:, inliers_outliers]
+        new_line = pca_line(inlier_points)
+        x = np.linspace(np.min(points[0,:]), np.max(points[0,:]), 100)
+        y = -(new_line[0]*x + new_line[2])/new_line[1]
+        plt.plot(x, y, c='orange')
+    
+    plt.show()
+    
+    return new_line
+
+def RANSAC2(points, N=100, threshold=0.1, p=0.99):
+    best_line = None
+    best_consensus = 0
+    m = points.shape[1]
+    s = 2
+    
+    for n in range(N):
+        
+        e_hat = 1 - s/m
+        
+        N_hat = np.log(1-p)/np.log((1-(1-e_hat)**2)
+        
+        if np.abs(N_hat) > 10000:
+            N_hat = 10000
+
+        p1, p2 = draw_two_points(points)
+        
+        l = line(p1.reshape(2,1), p2.reshape(2,1))
+        
+        c = consensus(points, l, threshold)
+        
+        if c > best_consensus:
+            best_consensus = c
+            best_line = l
+            s = c
+        print("n =", n)
+        print("N_hat =", N_hat)
+        print("e_hat =", e_hat)
+        print("m =", m)
+        if N_hat < n:
+            break
+        
+    inliers_outliers = in_out(points, best_line, threshold)
+    
+    inliers = points[:, inliers_outliers]
+    outliers = points[:, ~inliers_outliers]
+    plt.scatter(inliers[0,:], inliers[1,:], c='blue')
+    plt.scatter(outliers[0,:], outliers[1,:], c='red')
+    
+    if best_line is not None:
+        
+        inlier_points = points[:, inliers_outliers]
+        new_line = pca_line(inlier_points)
+        x = np.linspace(np.min(points[0,:]), np.max(points[0,:]), 100)
+        y = -(new_line[0]*x + new_line[2])/new_line[1]
+        plt.plot(x, y, c='orange')
+    
+    plt.show()
+    
+    return new_line
+

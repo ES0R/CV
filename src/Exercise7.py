@@ -179,7 +179,7 @@ def RANSAC2(points, N=100, threshold=0.1, p=0.99):
         
         e_hat = 1 - s/m
         
-        N_hat = np.log(1-p)/np.log((1-(1-e_hat)**2))
+        N_hat = np.log(1-p)/np.log((1-(1-e_hat)**2)
         
         if np.abs(N_hat) > 10000:
             N_hat = 10000
@@ -220,7 +220,7 @@ def RANSAC2(points, N=100, threshold=0.1, p=0.99):
     
     return new_line
 
-r_line = RANSAC2(points, N = 100, threshold=0.4, p=0.9)
+r_line = RANSAC2(points, N = 100, threshold=0.4, p=0.99)
 
 
 
