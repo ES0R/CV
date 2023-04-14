@@ -386,22 +386,19 @@ def RANSAC2(points, N=100, threshold=0.1, p=0.99):
     best_consensus = 0
     m = points.shape[1]
     s = 2
-    
+
     for n in range(N):
-        
+
         e_hat = 1 - s/m
-        
-        N_hat = np.log(1-p)/np.log((1-(1-e_hat)**2)
-        
-        if np.abs(N_hat) > 10000:
-            N_hat = 10000
+
+        N_hat = np.log(1-p)/np.log((1-(1-e_hat)*2))
 
         p1, p2 = draw_two_points(points)
-        
+
         l = line(p1.reshape(2,1), p2.reshape(2,1))
-        
+
         c = consensus(points, l, threshold)
-        
+
         if c > best_consensus:
             best_consensus = c
             best_line = l
@@ -412,23 +409,51 @@ def RANSAC2(points, N=100, threshold=0.1, p=0.99):
         print("m =", m)
         if N_hat < n:
             break
-        
+
     inliers_outliers = in_out(points, best_line, threshold)
-    
+
     inliers = points[:, inliers_outliers]
     outliers = points[:, ~inliers_outliers]
     plt.scatter(inliers[0,:], inliers[1,:], c='blue')
     plt.scatter(outliers[0,:], outliers[1,:], c='red')
-    
+
     if best_line is not None:
-        
+
         inlier_points = points[:, inliers_outliers]
         new_line = pca_line(inlier_points)
         x = np.linspace(np.min(points[0,:]), np.max(points[0,:]), 100)
         y = -(new_line[0]*x + new_line[2])/new_line[1]
         plt.plot(x, y, c='orange')
-    
+
     plt.show()
-    
+
     return new_line
+
+def SIFT_feat():
+    
+    im1 = cv2.imread("data/im1.jpg")    
+    im2 = cv2.imread("data/im2.jpg")
+    
+    # Create a SIFT object
+    sift = cv2.SIFT_create()
+    
+    # Detect keypoints and compute descriptors for both images
+    kp1, des1 = sift.detectAndCompute(im1, None)
+    kp2, des2 = sift.detectAndCompute(im2, None)
+    
+    # Create a brute-force matcher object with cross-checking
+    bf = cv2.BFMatcher(crossCheck=True)
+    
+    # Match descriptors of keypoints in both images
+    matches = bf.match(des1, des2)
+    
+    # Filter out good matches based on a distance threshold
+    good = []
+    for m in matches:
+        if m.distance < 0.1 * min(len(kp1), len(kp2)):
+            good.append(m)
+    
+    # Draw the matched keypoints on the images
+    img_matches = cv2.drawMatches(im1, kp1, im2, kp2, good, None)
+    return img_matches
 

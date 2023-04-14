@@ -12,11 +12,7 @@ import skimage
 #%% 8.1
 
 im = cv2.imread("data/sunflowers.jpg")
-im = im[:, :, ::-1]
-im = im.astype(float).mean(2) / 255
-
-plt.figure()
-plt.imshow(im, cmap='gray')
+    
 
 #g_list = scaleSpaced(im, 3, 5)
 
