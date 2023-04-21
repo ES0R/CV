@@ -264,7 +264,7 @@ def triangulate_nonlin(q_list, P_list):
     
     return result
 
-def gaussian1DKernel(sigma, size=4):
+def gaussian1DKernel(sigma, size=5):
     s = np.ceil(np.max([sigma*size, size]))
     x = np.arange(-s,s+1)
     x = x.reshape(x.shape + (1,))
@@ -274,7 +274,7 @@ def gaussian1DKernel(sigma, size=4):
     return g, gd
 
 def gaussianSmoothing(im, sigma):
-    g,gd = gaussian1DKernel(sigma, size=4)
+    g,gd = gaussian1DKernel(sigma, size=5)
     im = scipy.ndimage.convolve(im,g.T)
     I = scipy.ndimage.convolve(im,g)
     Iy = scipy.ndimage.convolve(im,gd)
@@ -352,3 +352,117 @@ def draw_two_points(points):
     
     return p1, p2
 
+def scaleSpaced(im, sigma, n):
+    
+    g_list = []
+    for i in range(n):
+        
+        img_smo,img_xdiv,img_ydiv = gaussianSmoothing(im, sigma*2**(i))
+        g_list.append(img_smo)
+        #plt.figure()
+        #plt.imshow(img_smo, cmap='gray')
+    return g_list
+
+def differenceOfGaussians(im, sigma, n):
+
+    g_list = scaleSpaced(im, sigma, n)
+    dog_list = [y - x for x,y in zip(g_list,g_list[1:])]
+    return dog_list
+
+def detectBlobs(im,sigma,n,tau):
+
+
+    DoG = differenceOfGaussians(im, sigma, n)
+    
+    maxDoG = []
+    for i in range(n-1):
+        dilated = cv2.dilate(np.abs(DoG[i]), np.ones((3,3)))
+        
+        maxima = (np.abs(DoG[i]) > tau)  & (np.abs(DoG[i]) == dilated)
+        
+        maxDoG.append(maxima.astype(np.float32) * (i+1)) #maxima.astype(np.float32)
+    
+    maxima = np.dstack(maxDoG).max(axis=2)
+    
+    blobs = []
+    for y in range(im.shape[0]):
+        for x in range(im.shape[1]):
+            if maxima[y,x] > 0:
+                scale = maxima[y,x]
+                radius = int(2 * sigma**(scale-1))
+                blobs.append((x,y,radius))
+    
+
+    return blobs
+
+def transformIm(im,theta,s):
+    height, width = im.shape[:2]
+    # get the center coordinates of the image to create the 2D rotation matrix
+    center = (width/2, height/2)
+    rotate_matrix = cv2.getRotationMatrix2D(center=center, angle=theta, scale=s)
+ 
+    # rotate the image using cv2.warpAffine
+    r_im = cv2.warpAffine(src=im, M=rotate_matrix, dsize=(width, height))
+    
+    return r_im
+
+def Fest_8point(q1,q2):
+    
+    B = []
+    N = q1.shape[1]
+    
+    for i in range(N):
+        x1 = q1[0,i]
+        y1 = q1[1,i]  
+        x2 = q2[0,i]
+        y2 = q2[1,i] 
+        
+        B.append(np.array([x1*x2,y1*x2,x2,x1*y2,y1*y2,y2,x1,y1,1]))
+    
+    B = np.array(B)
+    
+    U, S, V = np.linalg.svd(B)
+    F = V[-1, :].reshape((3, 3))
+    return F
+
+def estHomographyRANSAC(kp1, des1, kp2, des2):
+    
+    # Create a brute-force matcher object with cross-checking
+    bf = cv2.BFMatcher(crossCheck=True)
+
+    # Match descriptors of keypoints in both images
+    matches = bf.match(des1, des2)
+    
+    best_H = None
+    best_num_inliers = 0
+
+    N=200
+
+    sigma = 3
+
+    threshold_distance = (5.99*sigma**2)**2
+    
+    for n in range(N):
+        random_matches = np.random.choice(matches,4,replace=False)
+        # Compute homography using four random matches
+        src_pts = np.array([ kp1[m.queryIdx].pt for m in random_matches ]).T
+        dst_pts = np.array([ kp2[m.trainIdx].pt for m in random_matches ]).T
+        H = hest(src_pts, dst_pts, True)
+    
+        good = []
+
+        for i in matches:
+            p1 = np.array([kp1[i.queryIdx].pt[0], kp1[i.queryIdx].pt[1], 1])
+            p2 = np.array([kp2[i.trainIdx].pt[0], kp2[i.trainIdx].pt[1], 1])
+        
+            dist = np.linalg.norm(Pi(H@p1) - Pi(p2))**2 + np.linalg.norm(Pi(np.linalg.inv(H)@p2) - Pi(p1))**2
+            if dist < threshold_distance:
+                good.append(i)
+            
+        # Compute the number of inliers using the homography
+        num_inliers = len(good)
+            # Update the best homography if we found more inliers
+        if num_inliers > best_num_inliers:
+            best_H = H
+            best_num_inliers = num_inliers
+    return best_H
