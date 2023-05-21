@@ -18,6 +18,17 @@ def box3d(n=16):
         points.extend(set(it.permutations([(i, )*n, (j, )*n, N])))
     return np.hstack(points)/2
 
+def line_point_dist(l,p):
+    p = np.abs(np.dot(l,p))/(np.abs(p[-1])*np.sqrt(l[0]**2+l[1]**2))
+    return p
+
+def rotationm(x,y,z):
+    Rx = np.array([[1,0,0],[0,np.cos(x),-np.sin(x)],[0,np.sin(x),np.cos(x)]])
+    Ry = np.array([[np.cos(y),0,np.sin(y)],[0,1,0],[-np.sin(y),0,np.cos(y)]])
+    Rz = np.array([[np.cos(z),-np.sin(z),0],[np.sin(z),np.cos(z),0],[0,0,1]])
+    R = Rz@Ry@Rx
+    return R
+
 def Pi(point):
     return point[:-1]/point[-1]
 
@@ -41,7 +52,7 @@ def distprojectpoints(K, R, t, Q, k3, k5, k7):
     up = np.zeros_like(p)
     up[0, :] = x * dist
     up[1, :] = y * dist
-    p = K@PiInv(up)
+    p = Pi(K@PiInv(up))
     
     return p
 
@@ -283,7 +294,7 @@ def gaussianSmoothing(im, sigma):
 
 
 def smoothedHessian(im, sigma, epsilon):
-    g_ep, g_epd = gaussian1DKernel(sigma, size=4)
+    g_ep, g_epd = gaussian1DKernel(epsilon, size=4)
     g_ep2 = np.outer(g_ep,g_ep)
     I, Ix, Iy = gaussianSmoothing(im, sigma)
     c11 = scipy.ndimage.convolve(Ix**2, g_ep2)
@@ -425,6 +436,27 @@ def Fest_8point(q1,q2):
     F = V[-1, :].reshape((3, 3))
     return F
 
+def Fest_8point2(points1, points2):
+    assert points1.shape[1] >= 8 and points2.shape[1] >= 8, "At least 8 correspondences required"
+
+    # Create the coefficient matrix A
+    A = np.zeros((points1.shape[1], 9))
+    for i in range(points1.shape[1]):
+        x1, y1, _ = points1[:, i]
+        x2, y2, _ = points2[:, i]
+        A[i] = [x2 * x1, x2 * y1, x2, y2 * x1, y2 * y1, y2, x1, y1, 1]
+
+    # Solve the linear system using SVD
+    _, _, V = np.linalg.svd(A)
+    F = V[-1].reshape((3, 3))
+
+    # Enforce rank-2 constraint on F
+    U, S, V = np.linalg.svd(F)
+    S[-1] = 0
+    F = U @ np.diag(S) @ V
+
+    return F
+
 def estHomographyRANSAC(kp1, des1, kp2, des2):
     
     # Create a brute-force matcher object with cross-checking
@@ -466,3 +498,88 @@ def estHomographyRANSAC(kp1, des1, kp2, des2):
             best_H = H
             best_num_inliers = num_inliers
     return best_H
+
+def estfundamental(q1,q2):
+    consensus = 0
+    best = []
+        
+    for n in range(200):    
+            
+        matches = np.random.choice(q1.shape[1], 8, replace=False)
+        q1_sample = q1[:, matches]
+        q2_sample = q2[:, matches]
+            
+        F_est = Fest_8point(q1_sample,q2_sample)
+            
+        score = 0
+        cl = []
+        for k in range(q1.shape[1]):
+            c = cv2.sampsonDistance(q1[:,k], q2[:,k], F_est)  
+            if c < 3.84*(3**2):
+                score = score + 1
+                cl.append(k)
+        if  consensus < score:
+            consensus = score
+            best = cl
+        
+    q1_inl = q1[:,best]
+    q2_inl = q2[:,best]
+        
+    F_est = Fest_8point(q1_inl, q2_inl)
+    return F_est
+
+def pca_line(x): #assumes x is a (2 x n) array of points
+    d = np.cov(x)[:, 0]
+    d /= np.linalg.norm(d)
+    l = [d[1], -d[0]]
+    l.append(-(l@x.mean(1)))
+    return l
+
+
+def RANSAC2(points, N=100, threshold=0.1, p=0.99):
+    best_line = None
+    best_consensus = 0
+    m = points.shape[1]
+    s = 2
+    
+    for n in range(N):
+        
+        e_hat = 1 - s/m
+        
+        N_hat = np.log(1-p)/np.log((1-(1-e_hat)**2))
+
+        p1, p2 = draw_two_points(points)
+        
+        l = line(p1.reshape(2,1), p2.reshape(2,1))
+        
+        c = consensus(points, l, threshold)
+        
+        if c > best_consensus:
+            best_consensus = c
+            best_line = l
+            s = c
+        print("n =", n)
+        print("N_hat =", N_hat)
+        print("e_hat =", e_hat)
+        print("m =", m)
+        if N_hat < n:
+            break
+        
+    inliers_outliers = in_out(points, best_line, threshold)
+    
+    inliers = points[:, inliers_outliers]
+    outliers = points[:, ~inliers_outliers]
+    plt.scatter(inliers[0,:], inliers[1,:], c='blue')
+    plt.scatter(outliers[0,:], outliers[1,:], c='red')
+    
+    if best_line is not None:
+        
+        inlier_points = points[:, inliers_outliers]
+        new_line = pca_line(inlier_points)
+        x = np.linspace(np.min(points[0,:]), np.max(points[0,:]), 100)
+        y = -(new_line[0]*x + new_line[2])/new_line[1]
+        plt.plot(x, y, c='orange')
+    
+    plt.show()
+    
+    return new_line

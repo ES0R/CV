@@ -88,7 +88,7 @@ T, normp = normalize2d(p)
 
 #%%
 
-H = hest(p,q,True)
+H = hest(p,q,True)*5.448542151738266
 
 #%%
 
@@ -98,7 +98,7 @@ H_true = np.random.randn(3,3)
 q1h = H_true@q2h
 q1 = Pi(q1h)
 
-H = hest(q1,q2,True)
+H = hest(q2,q1,True)
 
 #%%
 

@@ -147,7 +147,7 @@ Kt = estimateIntrinsics(Hm)
 
 #%%
 
-Rs, ts = estimateExtrinsics(K, Hm)
+Rs, ts = estimateExtrinsics(Kt, Hm)
     
 
 #%%

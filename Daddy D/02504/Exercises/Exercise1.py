@@ -8,7 +8,21 @@ Created on Fri Feb  3 14:38:56 2023
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from functions import box3d, projectpoints
+from functions import box3d, projectpoints, line_point_dist
+
+#%%
+
+l = np.array([1/np.sqrt(2), 1/np.sqrt(2), -1])
+
+p1 = np.array([0,0,1])
+p2 = np.array([np.sqrt(2), np.sqrt(2), 1])
+p3 = np.array([np.sqrt(2), np.sqrt(2), 4])
+
+
+dist1 = line_point_dist(l , p1)
+dist2 = line_point_dist(l , p2)
+dist3 = line_point_dist(l , p3)
+
 
 #%% EXERCISE 1
 

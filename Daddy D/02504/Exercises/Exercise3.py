@@ -100,8 +100,8 @@ F = np.transpose(np.linalg.inv(K))@E@np.linalg.inv(K)
 
 #%%
 
-q1 = np.array([300,160,1]).T
-q2 = np.array([300,640,1]).T
+q1 = np.array([300,160,1]).T.reshape(3,1)
+q2 = np.array([300,640,1]).T.reshape(3,1)
 q_list = [q1, q2]
 
 

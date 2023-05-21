@@ -43,10 +43,10 @@ plt.imshow(C[1][1])
 
 #%% 6.4 
 
-r = harrisMeasure(im, 5, 2, 0.06)
+r = harrisMeasure(im, 5, 5, 0.06)
 
 plt.imshow(r)
-
+plt.colorbar()
 #%% 6.5
 '''
 def threshold_neighbors(image):

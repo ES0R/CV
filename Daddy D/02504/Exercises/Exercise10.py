@@ -80,7 +80,6 @@ for n in range(N):
     dst_pts = np.array([ kp2[m.trainIdx].pt for m in random_matches ]).T
     H = hest(src_pts, dst_pts, True)
     
-    
     good = []
 
     for i in matches:
