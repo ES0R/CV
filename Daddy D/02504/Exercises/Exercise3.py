@@ -11,6 +11,8 @@ import numpy as np
 from functions import PiInv, projectpoints
 from functions import CrossOp, triangulate
 from scipy.spatial.transform import Rotation
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 #%% EXERCISE 3
 
@@ -31,7 +33,7 @@ projectq1 = projectpoints(K, R1, t1, Q)
 
 projectq2 = projectpoints(K, R2, t2, Q)
 
-#%%
+#%% 3.2
 
 p = np.transpose(np.array([1,2,3]))
 
@@ -41,15 +43,15 @@ ppp = CrossOp(p)@pp
 
 pppp = np.cross(p, pp)
 
-#%%
+#%% 3.3
 
 E2 = CrossOp(t2[:, 0])@R2
 
 F2 = np.transpose(np.linalg.inv(K))@E2@np.linalg.inv(K)
 
 #%%
-
-epline = F2@PiInv(projectq1)*4.000030274590537
+p1 = PiInv(projectq1)
+epline = F2@p1#*4.000030274590537
 
 #%%
 
@@ -128,9 +130,9 @@ t2 = np.transpose([np.array([0.2,2,1])])
 Q = np.transpose([np.array([1,0.5,4])])
 
 
-projectq1 = projectpoints(K, R1, t1, Q)
+projectq1 = projectpoints(K, R1, t1, Q + np.random.normal(scale=0.05, size=(3, 1)))
+projectq2 = projectpoints(K, R2, t2, Q + np.random.normal(scale=0.05, size=(3, 1)))
 
-projectq2 = projectpoints(K, R2, t2, Q)
 
 q_list = [projectq1, projectq2]
 
@@ -145,3 +147,34 @@ P2 = K@Rt2
 P_list = [P1, P2]
 
 x = triangulate(q_list, P_list)
+
+# Define the camera positions
+camera1_position = -np.dot(R1.T, t1)
+camera2_position = -np.dot(R2.T, t2)
+
+# Define the original and triangulated points
+original_point = Q
+triangulated_point = x
+
+# Create a 3D figure
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+# Plot the camera positions
+ax.scatter(*projectq1,s=20, c='r', label='Camera 1 Position')
+ax.scatter(*projectq2,s=20, c='g', label='Camera 2 Position')
+
+# Plot the original and triangulated points
+ax.scatter(*original_point,s=5, c='b', label='Original Point')
+ax.scatter(*triangulated_point, s=5, c='y', label='Triangulated Point')
+
+# Set labels
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+
+# Show legend
+ax.legend()
+
+# Show the plot
+plt.show()

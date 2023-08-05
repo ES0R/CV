@@ -11,6 +11,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 
+def Pi(point):
+    return point[:-1]/point[-1]
+
+def PiInv(point):
+   ones_row = np.ones((1, point.shape[1]))
+   return np.concatenate((point, ones_row), axis=0)
+
 def box3d(n=16):
     points = []
     N = tuple(np.linspace(-1, 1, n))
@@ -29,12 +36,12 @@ def rotationm(x,y,z):
     R = Rz@Ry@Rx
     return R
 
-def Pi(point):
-    return point[:-1]/point[-1]
-
-def PiInv(point):
-   ones_row = np.ones((1, point.shape[1]))
-   return np.concatenate((point, ones_row), axis=0)
+    def Pi(point):
+        return point[:-1]/point[-1]
+    
+    def PiInv(point):
+       ones_row = np.ones((1, point.shape[1]))
+       return np.concatenate((point, ones_row), axis=0)
 
 def projectpoints(K, R, t, Q):
     Rt = np.concatenate((R,t), axis=1)
@@ -63,10 +70,9 @@ def undistortImage(im, K, k3, k5, k7):
     x1 = q[0, :]
     y1 = q[1, :]
     r = np.sqrt(x1**2 + y1**2)
-    dist = (1 + k3 * r**2 + k5 * r**4 + k7 * r**6)
     uq = np.zeros_like(q)
-    uq[0, :] = x1 * dist
-    uq[1, :] = y1 * dist
+    uq[0, :] = x1 * (1 + k3 * r**2 + k5 * r**4 + k7 * r**6)
+    uq[1, :] = y1 * (1 + k3 * r**2 + k5 * r**4 + k7 * r**6)
     q_d = uq
     p_d = K@PiInv(q_d)
     x_d = p_d[0].reshape(x.shape).astype(np.float32)
@@ -74,6 +80,7 @@ def undistortImage(im, K, k3, k5, k7):
     assert (p_d[2]==1).all(), 'You did a mistake somewhere'
     im_undistorted = cv2.remap(im, x_d, y_d, cv2.INTER_LINEAR)
     return im_undistorted
+
 
 def normalize2d(points):
     mean = np.mean(points, axis=1).reshape((2, 1))

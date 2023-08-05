@@ -40,8 +40,8 @@ q_norm = q / normq[:, np.newaxis]
 q_est = Pi(Pest@PiInv(Q))
 
 
-rmse2 = np.sqrt(np.mean(np.sum((q_norm - q_est)**2, axis=0)))
-
+rmse_norm = np.sqrt(np.mean(np.sum((q_norm - q_est)**2, axis=0)))
+rmse = np.sqrt(np.mean(np.sum((q - q_est)**2, axis=0)))
 
 #%%
 
@@ -83,6 +83,7 @@ ax = fig.add_subplot(projection='3d')
 ax.scatter(Q_a[0],Q_a[1],Q_a[2])
 ax.scatter(Q_b[0],Q_b[1],Q_b[2])
 ax.scatter(Q_c[0],Q_c[1],Q_c[2])
+ax.legend(["A","B","C"])
 
 
 #%%

@@ -25,11 +25,13 @@ im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
 im = im.astype(float)/255
 
+plt.imshow(im)
+
 #%%
 
 I, Ix, Iy = gaussianSmoothing(im, 5)
 
-plt.imshow(Ix)
+plt.imshow(I)
 
 #%% 6.3
 
@@ -43,7 +45,7 @@ plt.imshow(C[1][1])
 
 #%% 6.4 
 
-r = harrisMeasure(im, 5, 5, 0.06)
+r = harrisMeasure(im, 2, 2, 0.06)
 
 plt.imshow(r)
 plt.colorbar()
@@ -92,10 +94,10 @@ plt.scatter(c[0], c[1])
 
 #%% 6.6
 
-img = cv2.imread("week06_data/week06_data/TestIm1.png")
+img = cv2.imread("week06_data/week06_data/TestIm2.png")
 # Setting parameter values
-t_lower = 50  # Lower Threshold
-t_upper = 150  # Upper threshold
+t_lower = 100  # Lower Threshold
+t_upper = t_lower*2  # Upper threshold
   
 # Applying the Canny Edge filter
 edge = cv2.Canny(img, t_lower, t_upper)

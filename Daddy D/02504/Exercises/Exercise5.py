@@ -10,6 +10,7 @@ Created on Fri Mar  3 14:14:41 2023
 import numpy as np
 from functions import projectpoints, triangulate, triangulate_nonlin
 import cv2
+import scipy
 
 #%% EXERCISE 5.1
 
@@ -52,7 +53,8 @@ q2t = projectpoints(K2, R2, t2, Qt)
 e1 = np.linalg.norm(Q-Qt)
 
 #%% EXERCISE 5.3
-
+import scipy
+print(scipy.__version__)
 
 #%% EXERCISE 5.4
 
@@ -76,6 +78,30 @@ im1 = (im1[:,:,::-1])
 im2 = (im2[:,:,::-1])
 im3 = (im3[:,:,::-1])
 im4 = (im4[:,:,::-1])
+
+#%%
+
+im_small_1 = cv2.resize(im1, None, fx=0.25, fy=0.25)
+ret1, corners1 = cv2.findChessboardCorners(im_small_1, (11,8))
+
+im_small_2 = cv2.resize(im2, None, fx=0.25, fy=0.25)
+ret2, corners2 = cv2.findChessboardCorners(im_small_2, (11,8))
+
+im_small_3 = cv2.resize(im3, None, fx=0.25, fy=0.25)
+ret3, corners3 = cv2.findChessboardCorners(im_small_3, (11,8))
+
+im_small_4 = cv2.resize(im4, None, fx=0.25, fy=0.25)
+ret4, corners4 = cv2.findChessboardCorners(im_small_4, (11,8))
+
+
+
+
+
+
+
+
+
+
 
 
 
